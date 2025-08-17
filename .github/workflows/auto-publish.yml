@@ -1,0 +1,30 @@
+name: Auto Publish Article
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  generate-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install requests
+        run: pip install requests
+      - name: Generate Article
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          AFFILIATE_ID: ${{ secrets.AFFILIATE_ID }}
+        run: python .github/scripts/generate_article.py
+      - name: Commit and Push
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add content/articles/
+          git commit -m 'Auto publish new daily article' || echo "No changes"
+          git push
